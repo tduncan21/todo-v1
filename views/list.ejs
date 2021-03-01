@@ -8,15 +8,17 @@
     <section id="todo-list">
         <div class="box">
             <% for(item of itemList) { %>
-                <div class="item">                
-                    <input type="checkbox">
-                    <p><%=item%></p>
-                </div>
+                <form  action="/remove" method="POST">
+                    <div class="item">    
+                        <input name="listName" type="hidden" value="<%=listTitle%>">
+                        <input name="checkbox" type="checkbox" onchange="this.form.submit()" value="<%=item.id%>">
+                        <p><%=item.name%></p>
+                    </div>
+                </form>            
             <%}%>
             <form class="item" action="/" method="POST">
-                <input type="text" name="newItem" placeholder="Next Item" autofocus autocomplete="off">
+                <input type="text" name="newItem" placeholder="Next Item" autofocus autocomplete="off" required>
                 <button type="submit" name="list" value= <%= listTitle %>>+</button>
-                <button type="submit" name="item" value="remove">-</button>
             </form>
         </div>
     </section>
