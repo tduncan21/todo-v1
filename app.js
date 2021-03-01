@@ -29,9 +29,13 @@ const item3 = new Item({
 });
 
 const defaultItems = [item1, item2, item3];
+let availableLists = [];
 
 const listSchema = {
-    name: String,
+    name: {
+        type: String,
+        unique: true
+    },
     items: [itemsSchema]
 };
 
@@ -39,7 +43,15 @@ const List = mongoose.model("List", listSchema);
 
 
 app.get('/', (req, res) => {
-    // let day = date.getDate();
+    
+    List.find({}, {name: 1, _id: 0}, (err, results) => {
+        if(err) {
+            console.log(err);
+        } else {
+            availableLists = results;
+        }
+    });
+
     Item.find({}, (err, results) => {
         if(err) {
             console.log("First: " + err);
@@ -54,14 +66,18 @@ app.get('/', (req, res) => {
                     res.redirect("/");
                 });
             } else {
-                res.render('list', {listTitle: "Today", itemList: results});
+                res.render('list', {listTitle: "Today", itemList: results, availableLists: availableLists});
             }
         }
     });    
 });
 
+app.get('/favicon.ico', (req,res)=>{
+    res.redirect('/');   
+});
+
 app.get('/:listName', (req, res)=>{
-    const customListName = _.capitalize(req.params.listName)
+    const customListName = _.capitalize(req.params.listName);
     
     List.findOne({name: customListName}, (err, results) => {
         if(!err) {
@@ -73,7 +89,7 @@ app.get('/:listName', (req, res)=>{
                 list.save();
                 res.redirect("/" + customListName);
             } else {
-                res.render("list", {listTitle: results.name, itemList: results.items});
+                res.render("list", {listTitle: results.name, itemList: results.items, availableLists: availableLists});
             }
         } else {
             console.log(err);            

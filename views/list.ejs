@@ -23,4 +23,19 @@
         </div>
     </section>
 
+    <!-- Available Todo Lists -->
+    <section id="available-todo-lists">
+        <div class="box lists">
+            <div>
+                <p>Available Todo Lists</p>
+            </div>  
+            <div class="available-lists">    
+                <li><a href="/">Today</a></li>   
+                <% for(list of availableLists) { %> 
+                    <li href><a href="/<%=list.name%>"><%=list.name%></a></li>
+                <%}%>
+            </div>   
+        </div>
+    </section>
+
 <%- include("footer") -%>

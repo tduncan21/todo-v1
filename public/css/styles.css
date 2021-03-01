@@ -9,6 +9,14 @@ html {
     color: #fff;
     padding: 10px;
   }
+
+  li {
+    list-style: none;
+  }
+
+  a {
+    margin: 10px;
+  }
   
   .box {
     max-width: 400px;
@@ -22,7 +30,18 @@ html {
     background-color: #A683E3;
     text-align: center;
   }
+
+  .lists {
+    text-align: center;
+  }
   
+  .available-lists {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 20px;
+  }
+
   .item {
     min-height: 70px;
     display: flex;
