@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -10,7 +11,7 @@ app.use(express.static("public"));
 // app.use(express.static("components"));
 app.set('view engine', 'ejs');
 
-mongoose.connect("mongodb+srv://admin1:Slf1yUjCKOGHxsNH@cluster0.hqjwd.mongodb.net/todolistDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect("mongodb+srv://" + process.env.DB_USER + ":" + process.env.DB_PASSWORD + "@cluster0.hqjwd.mongodb.net/todolistDB", {useNewUrlParser: true, useUnifiedTopology: true});
 
 const itemsSchema = new mongoose.Schema({
     name: String
@@ -126,10 +127,9 @@ app.post('/remove', (req, res) => {
             if(err) {
                 console.log(err);
             } else {
-                console.log("Item deleted");
+                res.redirect("/");
             }
         });
-        res.redirect("/");
     } else {
         List.findOneAndUpdate(
             {name: listName},
