@@ -1,4 +1,4 @@
-<%- include("header") -%>
+<%- include("partials/header") -%>
 
     <div class="box" id="heading">
         <h1><%= listTitle %> - Todo List</h1>    
@@ -17,8 +17,8 @@
                 </form>            
             <%}%>
             <form class="item" action="/" method="POST">
-                <input type="text" name="newItem" placeholder="Next Item" autofocus autocomplete="off" required>
-                <button type="submit" name="list" value= <%= listTitle %>>+</button>
+                <input type="text" class="newItem" name="newItem" placeholder="Next Item" autofocus autocomplete="off" required>
+                <button class="list-button" type="submit" name="list" value= <%= listTitle %>>+</button>
             </form>
         </div>
     </section>
@@ -38,4 +38,4 @@
         </div>
     </section>
 
-<%- include("footer") -%>
+<%- include("partials/footer") -%>

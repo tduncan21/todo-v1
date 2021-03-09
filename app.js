@@ -5,20 +5,40 @@ const mongoose = require('mongoose');
 const _ = require('lodash');
 // const date = require(__dirname + "/date.js");
 const app = express();
+const session = require('express-session');
+const passport = require('passport');
+const passportLocalMongoose = require("passport-local-mongoose");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
+app.use(session({
+    secret:"ThisManThisPlan",
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+
 // app.use(express.static("components"));
 app.set('view engine', 'ejs');
 
+
 mongoose.connect("mongodb+srv://" + process.env.DB_USER + ":" + process.env.DB_PASSWORD + "@cluster0.hqjwd.mongodb.net/todolistDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.set('useCreateIndex', true);
 
 const itemsSchema = new mongoose.Schema({
     name: String
 });
 
-const Item = mongoose.model("Item", itemsSchema);
+const userSchema = new mongoose.Schema({
+    displayName: String,
+    username: String,
+    password: String
+});
+userSchema.plugin(passportLocalMongoose); // Hash and Salt
 
+const Item = mongoose.model("Item", itemsSchema);
+const User = mongoose.model("User", userSchema);
 const item1 = new Item({
     name: "Welcome to your todo list!"
 });
@@ -40,63 +60,106 @@ const listSchema = {
     items: [itemsSchema]
 };
 
+
 const List = mongoose.model("List", listSchema);
 
+passport.use(User.createStrategy());
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
-app.get('/', (req, res) => {
-    
-    List.find({}, {name: 1, _id: 0}, (err, results) => {
-        if(err) {
-            console.log(err);
-        } else {
-            availableLists = results;
-        }
+app.route('/')
+    .get((req, res) => {
+        res.render("login");
+    })
+    .post((req, res) => {
+        const user = new User({
+            username: req.body.email,
+            password: req.body.password
+        });
+        req.login(user, (err) => {
+            if(!err) {
+                passport.authenticate("local");
+            }
+        })
     });
 
-    Item.find({}, (err, results) => {
-        if(err) {
-            console.log("First: " + err);
-        } else {
-            if(results.length === 0){
-                Item.insertMany(defaultItems, (err) => {
-                    if(err){
-                        console.log("Second: " + err);
-                    } else {
-                        console.log("Default items added");
-                    }
-                    res.redirect("/");
-                });
+app.route('/register')
+    .get((req, res) => {
+        res.render("register");
+    })
+    .post((req, res) => {
+        User.register({username: req.body.username, displayName: req.body.displayName}, req.body.password, (err, user) => {
+            if(!err) {
+                passport.authenticate("local")(req, res, function(){
+                    res.redirect("/list/Today");
+                })
             } else {
-                res.render('list', {listTitle: "Today", itemList: results, availableLists: availableLists});
+                console.log(err);
+                res.redirect("/register");
             }
-        }
-    });    
+        })
+    });
+
+app.get('/list/:listName', (req, res) => {
+    if(req.isAuthenticated()) {
+        res.render('list');
+        console.log(req.user);
+    //     List.find({}, {name: 1, _id: 0}, (err, results) => {
+    //         if(err) {
+    //             console.log(err);
+    //         } else {
+    //             availableLists = results;
+    //         }
+    //     });
+    
+    //     Item.find({}, (err, results) => {
+    //         if(err) {
+    //             console.log("First: " + err);
+    //         } else {
+    //             if(results.length === 0){
+    //                 Item.insertMany(defaultItems, (err) => {
+    //                     if(err){
+    //                         console.log("Second: " + err);
+    //                     } else {
+    //                         console.log("Default items added");
+    //                     }
+    //                     res.redirect("/");
+    //                 });
+    //             } else {
+    //                 res.render('list', {listTitle: "Today", itemList: results, availableLists: availableLists});
+    //             }
+    //         }
+    //     });    
+    // } else {
+    //     res.redirect("/");
+     }
+    
 });
 
 app.get('/favicon.ico', (req,res)=>{
     res.redirect('/');   
 });
 
-app.get('/:listName', (req, res)=>{
-    const customListName = _.capitalize(req.params.listName);
+// app.get('/:listName', (req, res)=>{
+//     const customListName = _.capitalize(req.params.listName);
     
-    List.findOne({name: customListName}, (err, results) => {
-        if(!err) {
-            if(!results) {
-                const list = new List({
-                    name: customListName,
-                    items: defaultItems
-                });
-                list.save();
-                res.redirect("/" + customListName);
-            } else {
-                res.render("list", {listTitle: results.name, itemList: results.items, availableLists: availableLists});
-            }
-        } else {
-            console.log(err);            
-        }
-    });
-});
+//     List.findOne({name: customListName}, (err, results) => {
+//         if(!err) {
+//             if(!results) {
+//                 const list = new List({
+//                     name: customListName,
+//                     items: defaultItems
+//                 });
+//                 list.save();
+//                 res.redirect("/" + customListName);
+//             } else {
+//                 res.render("list", {listTitle: results.name, itemList: results.items, availableLists: availableLists});
+//             }
+//         } else {
+//             console.log(err);            
+//         }
+//     });
+// });
 
 app.post('/', (req, res) => {
     const itemName = req.body.newItem;
