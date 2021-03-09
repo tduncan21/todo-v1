@@ -12,7 +12,7 @@ const passportLocalMongoose = require("passport-local-mongoose");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.use(session({
-    secret:"ThisManThisPlan",
+    secret:process.env.SECRET,
     resave: false,
     saveUninitialized: false
 }));
@@ -91,7 +91,7 @@ app.route('/register')
         User.register({username: req.body.username, displayName: req.body.displayName}, req.body.password, (err, user) => {
             if(!err) {
                 passport.authenticate("local")(req, res, function(){
-                    res.redirect("/list/Today");
+                    res.redirect("/list");
                 })
             } else {
                 console.log(err);
@@ -100,7 +100,7 @@ app.route('/register')
         })
     });
 
-app.get('/list/:listName', (req, res) => {
+app.get('/list', (req, res) => {
     if(req.isAuthenticated()) {
         res.render('list');
         console.log(req.user);
