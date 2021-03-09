@@ -1,13 +1,41 @@
 <%- include("partials/header") -%>
 
     <div class="box" id="heading">
-        <h1>Todo List</h1>    
+        <h1><%= listTitle %> - Todo List</h1>    
     </div>
 
     <!-- Todo List Items -->
-
+    <section id="todo-list">
+        <div class="box">
+            <% for(item of itemList) { %>
+                <form  action="/remove" method="POST">
+                    <div class="item">    
+                        <input name="listName" type="hidden" value="<%=listTitle%>">
+                        <input name="checkbox" type="checkbox" onchange="this.form.submit()" value="<%=item.id%>">
+                        <p><%=item.name%></p>
+                    </div>
+                </form>            
+            <%}%>
+            <form class="item" action="/" method="POST">
+                <input type="text" class="newItem" name="newItem" placeholder="Next Item" autofocus autocomplete="off" required>
+                <button class="list-button" type="submit" name="list" value= <%= listTitle %>>+</button>
+            </form>
+        </div>
+    </section>
 
     <!-- Available Todo Lists -->
-
+    <section id="available-todo-lists">
+        <div class="box lists">
+            <div>
+                <p>Available Todo Lists</p>
+            </div>  
+            <div class="available-lists">    
+                <li><a href="/">Today</a></li>   
+                <% for(list of availableLists) { %> 
+                    <li href><a href="/<%=list.name%>"><%=list.name%></a></li>
+                <%}%>
+            </div>   
+        </div>
+    </section>
 
 <%- include("partials/footer") -%>

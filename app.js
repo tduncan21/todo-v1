@@ -10,7 +10,7 @@ const passport = require('passport');
 const passportLocalMongoose = require("passport-local-mongoose");
 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(express.static("public"));
+app.use(express.static(__dirname + "/public"));
 app.use(session({
     secret:process.env.SECRET,
     resave: false,
@@ -53,6 +53,7 @@ const defaultItems = [item1, item2, item3];
 let availableLists = [];
 
 const listSchema = {
+    userID: String,
     name: {
         type: String,
         unique: true
@@ -69,16 +70,24 @@ passport.deserializeUser(User.deserializeUser());
 
 app.route('/')
     .get((req, res) => {
-        res.render("login");
+        if(req.isAuthenticated()) {
+            res.redirect("/list/Today");
+        } else {
+            res.render("login");
+        }
     })
     .post((req, res) => {
         const user = new User({
-            username: req.body.email,
+            username: req.body.username,
             password: req.body.password
         });
         req.login(user, (err) => {
             if(!err) {
-                passport.authenticate("local");
+                passport.authenticate("local")(req, res, function(){
+                    res.redirect("/list/Today");
+                })
+            } else {
+                res.redirect("/register");
             }
         })
     });
@@ -91,7 +100,7 @@ app.route('/register')
         User.register({username: req.body.username, displayName: req.body.displayName}, req.body.password, (err, user) => {
             if(!err) {
                 passport.authenticate("local")(req, res, function(){
-                    res.redirect("/list");
+                    res.redirect("/list/Today");
                 })
             } else {
                 console.log(err);
@@ -100,38 +109,42 @@ app.route('/register')
         })
     });
 
-app.get('/list', (req, res) => {
+app.get('/list/:listName', (req, res) => {
     if(req.isAuthenticated()) {
-        res.render('list');
-        console.log(req.user);
-    //     List.find({}, {name: 1, _id: 0}, (err, results) => {
-    //         if(err) {
-    //             console.log(err);
-    //         } else {
-    //             availableLists = results;
-    //         }
-    //     });
+        // See if user has any lists
+        List.find({userID: req.user.id}, {name: 1, _id: 0}, (err, results) => {
+            if(err) {
+                console.log(err + "hello");
+            } else {
+                if(results.length === 0) {
+                    Item.find({}, (err, results) => {
+                        if(err) {
+                            console.log("First: " + err);
+                        } else {
+                            if(results.length === 0){
+                                Item.insertMany(defaultItems, (err) => {
+                                    if(err){
+                                        console.log("Second: " + err);
+                                    } else {
+                                        console.log("Default items added");
+                                    }
+                                    res.redirect("/");
+                                });
+                            } else {
+                                res.render('list', {listTitle: req.params.listName, itemList: results, availableLists: availableLists});
+                            }
+                        }
+                    });
+                } else {
+                    availableLists = results;
+                    res.render('list', {listTitle: req.params.listName, itemList: results, availableLists: availableLists});
+                }
+            }
+        });
     
-    //     Item.find({}, (err, results) => {
-    //         if(err) {
-    //             console.log("First: " + err);
-    //         } else {
-    //             if(results.length === 0){
-    //                 Item.insertMany(defaultItems, (err) => {
-    //                     if(err){
-    //                         console.log("Second: " + err);
-    //                     } else {
-    //                         console.log("Default items added");
-    //                     }
-    //                     res.redirect("/");
-    //                 });
-    //             } else {
-    //                 res.render('list', {listTitle: "Today", itemList: results, availableLists: availableLists});
-    //             }
-    //         }
-    //     });    
-    // } else {
-    //     res.redirect("/");
+           
+    } else {
+        res.redirect("/");
      }
     
 });
